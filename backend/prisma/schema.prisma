@@ -1,0 +1,709 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum StaffRole {
+  OWNER_ADMIN      @map("Owner/Admin")
+  STORE_MANAGER    @map("Store Manager")
+  CASHIER          @map("Cashier")
+  INVENTORY_STAFF  @map("Inventory Staff")
+  STORE_ASSISTANT  @map("Store Assistant")
+}
+
+enum ProductType {
+  Eyeglasses
+  Sunglasses
+  Prescription_lenses @map("Prescription lenses")
+  Contact_lenses      @map("Contact lenses")
+  Accessories
+}
+
+enum PublicationStatus {
+  published
+  draft
+  archived
+}
+
+enum StockMovementType {
+  sale
+  purchase_receipt
+  adjustment_in
+  adjustment_out
+  return
+  reservation_hold
+  reservation_release
+}
+
+enum StockRequestStatus {
+  Draft
+  Submitted
+  Approved
+  Rejected
+  Ordered
+  Received
+  Cancelled
+}
+
+enum BookingType {
+  appointment
+  reservation
+}
+
+enum BookingStatus {
+  Pending
+  Confirmed
+  Arrived
+  Preparing
+  Ready_for_pickup @map("Ready for pickup")
+  Collected
+  Completed
+  Cancelled
+  Expired
+}
+
+enum PaymentMethod {
+  Cash
+  UPI
+  Card
+  Split
+  Other
+}
+
+enum SaleStatus {
+  Completed
+  Refunded
+  Partially_Refunded
+  Cancelled
+}
+
+enum PurchaseOrderStatus {
+  Draft
+  Sent
+  Partially_Received
+  Received
+  Cancelled
+}
+
+// -------------------------------------------------------------
+// USER, STAFF & SECURITY
+// -------------------------------------------------------------
+
+model User {
+  id                String      @id @default(uuid())
+  employeeCode      String      @unique
+  fullName          String
+  email             String      @unique
+  phone             String
+  passwordHash      String
+  role              StaffRole   @default(STORE_ASSISTANT)
+  customPermissions String[]    @default([])
+  isActive          Boolean     @default(true)
+  avatarUrl         String?
+  lastLogin         DateTime?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  auditLogs         AuditLog[]
+
+  @@map("users")
+}
+
+// -------------------------------------------------------------
+// PRODUCT CATALOG
+// -------------------------------------------------------------
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("categories")
+}
+
+model Brand {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("brands")
+}
+
+model Product {
+  id            String            @id @default(uuid())
+  name          String
+  slug          String            @unique
+  brand         String
+  category      String
+  productType   ProductType       @default(Eyeglasses)
+  description   String            @db.Text
+  modelCode     String
+  basePrice     Decimal           @db.Decimal(12, 2)
+  featuredImage String
+  images        String[]          @default([])
+  status        PublicationStatus @default(published)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  variants      ProductVariant[]
+
+  @@index([category])
+  @@index([brand])
+  @@index([status])
+  @@map("products")
+}
+
+model ProductVariant {
+  id                String          @id @default(uuid())
+  productId         String
+  product           Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantSku        String          @unique
+  barcode           String          @unique
+  colorName         String
+  colorHex          String
+  size              String
+  material          String
+  sellingPrice      Decimal         @db.Decimal(12, 2)
+  costPrice         Decimal         @db.Decimal(12, 2)
+  stockOnHand       Int             @default(0)
+  reservedQuantity  Int             @default(0)
+  reorderLevel      Int             @default(5)
+  images            String[]        @default([])
+  isAvailable       Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  movements         StockMovement[]
+  saleItems         SaleItem[]
+  purchaseOrderItems PurchaseOrderItem[]
+
+  @@index([productId])
+  @@map("product_variants")
+}
+
+// -------------------------------------------------------------
+// INVENTORY
+// -------------------------------------------------------------
+
+model StockMovement {
+  id            String            @id @default(uuid())
+  variantId     String
+  variant       ProductVariant    @relation(fields: [variantId], references: [id])
+  variantSku    String
+  productName   String
+  movementType  StockMovementType
+  quantityDelta Int
+  previousStock Int
+  newStock      Int
+  referenceType String            // 'sale' | 'po' | 'adjustment' | 'booking' | 'stocktake'
+  referenceId   String
+  reason        String?
+  performedBy   String
+  timestamp     DateTime          @default(now())
+
+  @@index([variantId])
+  @@index([referenceType, referenceId])
+  @@map("stock_movements")
+}
+
+model StockAdjustment {
+  id             String   @id @default(uuid())
+  variantId      String
+  variantSku     String
+  adjustmentType String   // 'add' | 'subtract' | 'set'
+  quantity       Int
+  reason         String
+  notes          String?
+  performedBy    String
+  createdAt      DateTime @default(now())
+
+  @@map("stock_adjustments")
+}
+
+model StockRequest {
+  id            String             @id @default(uuid())
+  requestNumber String             @unique
+  requestedBy   String
+  status        StockRequestStatus @default(Draft)
+  urgency       String             @default("Standard")
+  notes         String?
+  approverNotes String?
+  approvedBy    String?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  items         StockRequestItem[]
+
+  @@map("stock_requests")
+}
+
+model StockRequestItem {
+  id                String       @id @default(uuid())
+  requestId         String
+  request           StockRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  variantId         String
+  variantSku        String
+  productName       String
+  currentStock      Int
+  requestedQuantity Int
+  approvedQuantity  Int?
+  estimatedCost     Decimal      @db.Decimal(12, 2)
+
+  @@index([requestId])
+  @@map("stock_request_items")
+}
+
+model StocktakeSession {
+  id                 String          @id @default(uuid())
+  reference          String          @unique
+  categoryOrBrand    String
+  startedAt          DateTime        @default(now())
+  completedAt        DateTime?
+  status             String          @default("In Progress") // 'In Progress' | 'Completed' | 'Reconciled'
+  auditedBy          String
+  totalVarianceCount Int             @default(0)
+  totalVarianceValue Decimal         @default(0) @db.Decimal(12, 2)
+
+  items              StocktakeItem[]
+
+  @@map("stocktake_sessions")
+}
+
+model StocktakeItem {
+  id           String           @id @default(uuid())
+  sessionId    String
+  session      StocktakeSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  variantId    String
+  variantSku   String
+  productName  String
+  systemStock  Int
+  countedStock Int
+  variance     Int
+  unitCost     Decimal          @db.Decimal(12, 2)
+
+  @@index([sessionId])
+  @@map("stocktake_items")
+}
+
+// -------------------------------------------------------------
+// CUSTOMERS & PRESCRIPTIONS
+// -------------------------------------------------------------
+
+model Customer {
+  id             String                @id @default(uuid())
+  customerCode   String                @unique
+  firstName      String
+  lastName       String
+  email          String?
+  phone          String                @unique
+  dateOfBirth    String?
+  gender         String?
+  street         String?
+  city           String?
+  state          String?
+  postalCode     String?
+  country        String?               @default("India")
+  prefSms        Boolean               @default(true)
+  prefWhatsapp   Boolean               @default(true)
+  prefEmail      Boolean               @default(false)
+  prefMarketing  Boolean               @default(true)
+  totalVisits    Int                   @default(0)
+  totalSpent     Decimal               @default(0) @db.Decimal(12, 2)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  prescriptions  OpticalPrescription[]
+  sales          Sale[]
+  bookings       Booking[]
+
+  @@index([phone])
+  @@index([customerCode])
+  @@map("customers")
+}
+
+model OpticalPrescription {
+  id                  String   @id @default(uuid())
+  customerId          String
+  customer            Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  recordedDate        DateTime @default(now())
+  optometristName     String
+  clinicOrBranch      String
+  rightSph            String
+  rightCyl            String
+  rightAxis           String
+  rightAdd            String?
+  leftSph             String
+  leftCyl             String
+  leftAxis            String
+  leftAdd             String?
+  pupillaryDistance   Decimal  @db.Decimal(5, 2)
+  nearPd              Decimal? @db.Decimal(5, 2)
+  lensTypeRecommended String?
+  coatingRecommended  String?
+  notes               String?
+  createdAt           DateTime @default(now())
+
+  @@index([customerId])
+  @@map("optical_prescriptions")
+}
+
+// -------------------------------------------------------------
+// BOOKINGS & RESERVATIONS
+// -------------------------------------------------------------
+
+model Booking {
+  id                  String        @id @default(uuid())
+  referenceNumber     String        @unique
+  bookingType         BookingType
+  status              BookingStatus @default(Pending)
+  customerName        String
+  customerPhone       String
+  customerEmail       String?
+  customerId          String?
+  customer            Customer?     @relation(fields: [customerId], references: [id])
+  appointmentPurpose  String?
+  appointmentDate     String?
+  timeSlot            String?
+  assignedOptometrist String?
+  pickupWindowStart   DateTime?
+  pickupWindowEnd     DateTime?
+  notes               String?
+  timeline            Json?         @default("[]")
+  reservedItems       Json?         @default("[]")
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@index([customerPhone])
+  @@index([bookingType, status])
+  @@map("bookings")
+}
+
+// -------------------------------------------------------------
+// SALES, POS & RETURNS
+// -------------------------------------------------------------
+
+model Sale {
+  id                   String        @id @default(uuid())
+  invoiceNumber        String        @unique
+  customerId           String?
+  customer             Customer?     @relation(fields: [customerId], references: [id])
+  customerName         String?
+  customerPhone        String?
+  customerEmail        String?
+  subtotal             Decimal       @db.Decimal(12, 2)
+  discountTotal        Decimal       @default(0) @db.Decimal(12, 2)
+  appliedCoupon        String?
+  taxRatePercent       Decimal       @default(12) @db.Decimal(5, 2)
+  taxTotal             Decimal       @db.Decimal(12, 2)
+  grandTotal           Decimal       @db.Decimal(12, 2)
+  paymentMethod        PaymentMethod @default(Cash)
+  amountReceived       Decimal?      @db.Decimal(12, 2)
+  changeGiven          Decimal?      @db.Decimal(12, 2)
+  transactionReference String?
+  status               SaleStatus    @default(Completed)
+  cashierName          String
+  notes                String?
+  idempotencyKey       String?       @unique
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  items                SaleItem[]
+  returns              SaleReturn[]
+
+  @@index([invoiceNumber])
+  @@index([status])
+  @@map("sales")
+}
+
+model SaleItem {
+  id               String         @id @default(uuid())
+  saleId           String
+  sale             Sale           @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  variantId        String
+  variant          ProductVariant @relation(fields: [variantId], references: [id])
+  variantSku       String
+  productName      String
+  brand            String
+  colorName        String
+  size             String
+  unitPrice        Decimal        @db.Decimal(12, 2)
+  quantity         Int
+  returnedQuantity Int            @default(0)
+  discount         Decimal        @default(0) @db.Decimal(12, 2)
+  taxableAmount    Decimal        @db.Decimal(12, 2)
+  total            Decimal        @db.Decimal(12, 2)
+
+  @@index([saleId])
+  @@index([variantId])
+  @@map("sale_items")
+}
+
+model SaleReturn {
+  id           String        @id @default(uuid())
+  returnNumber String        @unique
+  saleId       String
+  sale         Sale          @relation(fields: [saleId], references: [id])
+  invoiceNumber String
+  customerName String
+  refundMethod PaymentMethod @default(Cash)
+  totalRefund  Decimal       @db.Decimal(12, 2)
+  processedBy  String
+  createdAt    DateTime      @default(now())
+
+  items        SaleReturnItem[]
+
+  @@index([saleId])
+  @@map("sale_returns")
+}
+
+model SaleReturnItem {
+  id               String     @id @default(uuid())
+  returnId         String
+  return           SaleReturn @relation(fields: [returnId], references: [id], onDelete: Cascade)
+  saleItemId       String
+  variantId        String
+  productName      String
+  variantSku       String
+  returnedQuantity Int
+  unitPrice        Decimal    @db.Decimal(12, 2)
+  refundAmount     Decimal    @db.Decimal(12, 2)
+  restockStock     Boolean    @default(true)
+  reason           String
+
+  @@index([returnId])
+  @@map("sale_return_items")
+}
+
+// -------------------------------------------------------------
+// SUPPLIERS & PURCHASING
+// -------------------------------------------------------------
+
+model Supplier {
+  id             String          @id @default(uuid())
+  businessName   String
+  contactPerson  String
+  phone          String
+  email          String
+  address        String
+  city           String
+  state          String
+  taxId          String
+  paymentTerms   String          @default("Net 30")
+  isActive       Boolean         @default(true)
+  notes          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  purchaseOrders PurchaseOrder[]
+
+  @@map("suppliers")
+}
+
+model PurchaseOrder {
+  id                   String              @id @default(uuid())
+  orderNumber          String              @unique
+  supplierId           String
+  supplier             Supplier            @relation(fields: [supplierId], references: [id])
+  supplierName         String
+  status               PurchaseOrderStatus @default(Draft)
+  orderDate            DateTime            @default(now())
+  expectedDeliveryDate DateTime
+  subtotal             Decimal             @db.Decimal(12, 2)
+  taxAmount            Decimal             @default(0) @db.Decimal(12, 2)
+  totalCost            Decimal             @db.Decimal(12, 2)
+  notes                String?
+  createdByName        String
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  items                PurchaseOrderItem[]
+  goodsReceipts        GoodsReceipt[]
+
+  @@index([supplierId])
+  @@index([status])
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id              String         @id @default(uuid())
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder  @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  variantId       String
+  variant         ProductVariant @relation(fields: [variantId], references: [id])
+  variantSku      String
+  productName     String
+  orderedQuantity Int
+  receivedQuantity Int           @default(0)
+  unitCost        Decimal        @db.Decimal(12, 2)
+  totalCost       Decimal        @db.Decimal(12, 2)
+
+  @@index([purchaseOrderId])
+  @@map("purchase_order_items")
+}
+
+model GoodsReceipt {
+  id                 String             @id @default(uuid())
+  receiptNumber      String             @unique
+  purchaseOrderId    String
+  purchaseOrder      PurchaseOrder      @relation(fields: [purchaseOrderId], references: [id])
+  orderNumber        String
+  supplierName       String
+  deliveryNoteNumber String?
+  receivedDate       DateTime           @default(now())
+  receivedBy         String
+  notes              String?
+
+  items              GoodsReceiptItem[]
+
+  @@index([purchaseOrderId])
+  @@map("goods_receipts")
+}
+
+model GoodsReceiptItem {
+  id                  String       @id @default(uuid())
+  goodsReceiptId      String
+  goodsReceipt        GoodsReceipt @relation(fields: [goodsReceiptId], references: [id], onDelete: Cascade)
+  purchaseOrderItemId String
+  variantId           String
+  variantSku          String
+  productName         String
+  orderedQuantity     Int
+  previouslyReceived  Int
+  receivedNow         Int
+  damagedOrMissing    Int          @default(0)
+  unitCost            Decimal      @db.Decimal(12, 2)
+
+  @@index([goodsReceiptId])
+  @@map("goods_receipt_items")
+}
+
+// -------------------------------------------------------------
+// OFFERS & COUPONS
+// -------------------------------------------------------------
+
+model Offer {
+  id                 String    @id @default(uuid())
+  name               String
+  description        String
+  discountType       String    // 'Percentage' | 'Fixed_Amount' | 'Product_Specific' | 'Category_Specific'
+  discountValue      Decimal   @db.Decimal(10, 2)
+  minimumPurchase    Decimal   @default(0) @db.Decimal(10, 2)
+  maximumDiscount    Decimal?  @db.Decimal(10, 2)
+  applicableCategory String?
+  applicableProductId String?
+  startDate          DateTime
+  endDate            DateTime
+  usageLimit         Int?
+  usedCount          Int       @default(0)
+  isActive           Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+
+  coupons            Coupon[]
+
+  @@map("offers")
+}
+
+model Coupon {
+  id               String             @id @default(uuid())
+  code             String             @unique
+  offerId          String
+  offer            Offer              @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  offerName        String
+  usageLimit       Int                @default(100)
+  perCustomerLimit Int                @default(1)
+  usedCount        Int                @default(0)
+  expiryDate       DateTime
+  isActive         Boolean            @default(true)
+  createdAt        DateTime           @default(now())
+
+  redemptions      CouponRedemption[]
+
+  @@index([code])
+  @@map("coupons")
+}
+
+model CouponRedemption {
+  id             String   @id @default(uuid())
+  couponId       String
+  coupon         Coupon   @relation(fields: [couponId], references: [id])
+  saleId         String?
+  customerId     String?
+  customerPhone  String?
+  discountAmount Decimal  @db.Decimal(10, 2)
+  redeemedAt     DateTime @default(now())
+
+  @@index([couponId])
+  @@map("coupon_redemptions")
+}
+
+// -------------------------------------------------------------
+// NOTIFICATIONS, SETTINGS & AUDIT LOGS
+// -------------------------------------------------------------
+
+model NotificationLog {
+  id        String   @id @default(uuid())
+  recipient String
+  channel   String   // 'SMS' | 'WhatsApp' | 'Email'
+  subject   String?
+  content   String   @db.Text
+  type      String
+  status    String   @default("Sent") // 'Sent' | 'Queued' | 'Failed'
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("notification_logs")
+}
+
+model StoreSetting {
+  id                          String   @id @default("default")
+  storeName                   String   @default("OcuSphere Eyewear")
+  tagline                     String   @default("Precision Optics & Luxury Eyewear")
+  address                     Json
+  phone                       String   @default("+91 98200 11223")
+  email                       String   @default("contact@ocusphere.in")
+  gstin                       String   @default("27AABCU9603R1ZM")
+  openingHours                Json
+  bookingCapacityPerHour      Int      @default(4)
+  reservationHoldDays         Int      @default(3)
+  currency                    String   @default("INR")
+  currencySymbol              String   @default("₹")
+  taxRatePercent              Decimal  @default(12) @db.Decimal(5, 2)
+  receiptHeader               String   @default("OcuSphere Flagship Store - Bandra West")
+  receiptFooter               String   @default("Thank you for choosing OcuSphere. 1-Year Frame Warranty Included.")
+  enableSmsNotifications      Boolean  @default(true)
+  enableWhatsappNotifications Boolean  @default(true)
+  enableEmailNotifications    Boolean  @default(false)
+  updatedAt                   DateTime @updatedAt
+
+  @@map("store_settings")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  actorName String
+  actorRole String
+  action    String   // 'CREATE' | 'UPDATE' | 'DELETE' | 'APPROVE' | 'REJECT' | 'SALE' | 'RECEIPT' | 'ADJUST' | 'LOGIN'
+  entity    String
+  entityId  String?
+  summary   String
+  details   Json?
+  ipAddress String?
+  timestamp DateTime @default(now())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([timestamp])
+  @@map("audit_logs")
+}

@@ -1,0 +1,27 @@
+# ==============================================================================
+# Production Docker Compose Override
+# ==============================================================================
+# This override switches the backend build target to 'runner' (optimized production
+# Node.js Alpine image without development tools/hot reload), removes host bind
+# mounts, and sets restart policies to 'always'.
+
+services:
+  postgres:
+    restart: always
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: runner
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+      - PORT=3001
+      - JWT_SECRET=${JWT_SECRET}
+      - FRONTEND_ORIGIN=${FRONTEND_ORIGIN}
+    volumes: []
+
+  app:
+    restart: always

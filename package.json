@@ -1,0 +1,15 @@
+{
+  "name": "ocusphere-optical-retail-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "OcuSphere — Contemporary Optical Retail Website, POS & Admin ERP",
+  "scripts": {
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "docker:dev": "docker compose --profile dev up",
+    "deploy:local": "bash deployment/env.local",
+    "deploy:prod": "bash deployment/env.prod"
+  }
+}

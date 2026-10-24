@@ -1,0 +1,44 @@
+# ==============================================================================
+# OcuSphere Optical Retail - Deployment Directory .gitignore
+# ==============================================================================
+
+# Ignore active and custom environment secret files
+.env
+.env.*
+.env.local
+.env.prod
+local.env
+prod.env
+*.env.local
+*.env.production
+*.env.override
+*.backup*
+*.bak
+
+# Ignore SSL/TLS certificates and SSH deployment keys
+*.pem
+*.key
+*.crt
+*.cert
+*.pfx
+*.p12
+
+# Ignore deployment logs and temporary run files
+*.log
+*.tmp
+*.temp
+pid/
+*.pid
+
+# Explicitly keep deployment scripts and compose configurations
+!README.md
+!compose.prod.yaml
+!env.local
+!env.local.sh
+!env.local.bat
+!env.local.ps1
+!env.prod
+!env.prod.sh
+!env.prod.bat
+!env.prod.ps1
+

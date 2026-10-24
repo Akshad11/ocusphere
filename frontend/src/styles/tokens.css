@@ -1,0 +1,13 @@
+:root {
+  --color-canvas: #ffffff;
+  --color-canvas-subtle: #fafafa;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f8fafc;
+  --color-border: #e2e8f0;
+  --color-border-subtle: #f1f5f9;
+  --color-text-primary: #09090b;
+  --color-text-secondary: #64748b;
+  --color-text-muted: #94a3b8;
+  --color-primary-cta: #09090b;
+  --color-primary-cta-hover: #27272a;
+}

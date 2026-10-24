@@ -1,0 +1,121 @@
+name: ocusphere-optical-retail
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ocusphere-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-ocusphere_optical}
+    ports:
+      - "${POSTGRES_PORT:-5434}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-ocusphere_optical}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 3s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: dev
+    container_name: ocusphere-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${BACKEND_PORT:-3005}:3001"
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-ocusphere_optical}?schema=public
+      - PORT=3001
+      - NODE_ENV=development
+      - JWT_SECRET=${JWT_SECRET:-ocusphere-super-secure-production-jwt-secret-key-2026}
+      - FRONTEND_ORIGIN=${FRONTEND_ORIGIN:-http://localhost:3000,http://localhost:3002,http://localhost:5173}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3001/api/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  backend-dev:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: dev
+    container_name: ocusphere-backend-dev
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${BACKEND_DEV_PORT:-3005}:3001"
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-ocusphere_optical}?schema=public
+      - PORT=3001
+      - NODE_ENV=development
+      - JWT_SECRET=${JWT_SECRET:-ocusphere-super-secure-production-jwt-secret-key-2026}
+      - FRONTEND_ORIGIN=${FRONTEND_ORIGIN:-http://localhost:3000,http://localhost:3002,http://localhost:5173}
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    profiles:
+      - dev
+
+  app:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: runner
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:3005/api/v1}
+        VITE_DATA_MODE: ${VITE_DATA_MODE:-api}
+    container_name: ocusphere-optical-retail
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${PORT:-3002}:80"
+    environment:
+      - VITE_DATA_MODE=${VITE_DATA_MODE:-api}
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:3005/api/v1}
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:80/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 3s
+
+  dev:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: dev
+    container_name: ocusphere-retail-dev
+    restart: unless-stopped
+    ports:
+      - "${DEV_PORT:-5173}:3000"
+    environment:
+      - VITE_DATA_MODE=${VITE_DATA_MODE:-api}
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:3005/api/v1}
+      - NODE_ENV=development
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    profiles:
+      - dev
+
+volumes:
+  postgres_data:
+    name: ocusphere_postgres_data
