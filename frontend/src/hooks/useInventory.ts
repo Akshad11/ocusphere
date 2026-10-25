@@ -21,10 +21,10 @@ export function useInventory(params?: { search?: string; stockStatus?: string; p
         mockInventoryService.getStockRequests(),
         mockInventoryService.getStocktakes(),
       ]);
-      setStockRows(sList);
-      setMovements(mList);
-      setRequests(rList);
-      setStocktakes(stList);
+      setStockRows(Array.isArray(sList) ? sList : (sList as any)?.items || []);
+      setMovements(Array.isArray(mList) ? mList : (mList as any)?.items || []);
+      setRequests(Array.isArray(rList) ? rList : (rList as any)?.items || []);
+      setStocktakes(Array.isArray(stList) ? stList : (stList as any)?.items || []);
     } catch (err: any) {
       setError(err?.message || 'Failed to load inventory data');
     } finally {
@@ -62,10 +62,10 @@ export function useInventory(params?: { search?: string; stockStatus?: string; p
   };
 
   return {
-    stockRows,
-    movements,
-    requests,
-    stocktakes,
+    stockRows: Array.isArray(stockRows) ? stockRows : [],
+    movements: Array.isArray(movements) ? movements : [],
+    requests: Array.isArray(requests) ? requests : [],
+    stocktakes: Array.isArray(stocktakes) ? stocktakes : [],
     loading,
     error,
     refresh: fetchInventory,

@@ -80,7 +80,7 @@ export const CouponsPage: React.FC = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-200">
-            {coupons.map((c) => (
+            {(coupons || []).map((c) => (
               <tr key={c.id} className="hover:bg-neutral-50/70">
                 <td className="py-3 px-4">
                   <div className="flex items-center gap-2">
@@ -127,7 +127,7 @@ export const CouponsPage: React.FC = () => {
           </tbody>
         </table>
 
-        {coupons.length === 0 && (
+        {(coupons || []).length === 0 && (
           <div className="p-8 text-center text-neutral-500 text-sm">No coupons configured.</div>
         )}
       </div>

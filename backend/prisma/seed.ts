@@ -104,7 +104,12 @@ async function main() {
   for (const s of staffUsers) {
     await prisma.user.upsert({
       where: { email: s.email },
-      update: { role: s.role, customPermissions: s.customPermissions },
+      update: {
+        role: s.role,
+        customPermissions: s.customPermissions,
+        isActive: true,
+        passwordHash: defaultPasswordHash,
+      },
       create: {
         employeeCode: s.employeeCode,
         fullName: s.fullName,
@@ -638,114 +643,120 @@ async function main() {
 
   // 7. Offers & Coupons
   console.log('Seeding Offers & Coupons...');
-  const festiveOffer = await prisma.offer.create({
-    data: {
-      name: 'Festive Eyewear Celebration',
-      description: 'Get 15% flat discount on complete frame and lens pairings.',
-      discountType: 'Percentage',
-      discountValue: 15.0,
-      minimumPurchase: 3000,
-      maximumDiscount: 2000,
-      startDate: new Date('2026-01-01'),
-      endDate: new Date('2026-12-31'),
-      usageLimit: 500,
-      usedCount: 28,
-      isActive: true,
-      coupons: {
-        create: [
-          {
-            code: 'FESTIVE15',
-            offerName: 'Festive Eyewear Celebration',
-            usageLimit: 500,
-            perCustomerLimit: 2,
-            usedCount: 28,
-            expiryDate: new Date('2026-12-31'),
-            isActive: true,
-          },
-        ],
+  const existingCoupon = await prisma.coupon.findUnique({ where: { code: 'FESTIVE15' } });
+  if (!existingCoupon) {
+    const festiveOffer = await prisma.offer.create({
+      data: {
+        name: 'Festive Eyewear Celebration',
+        description: 'Get 15% flat discount on complete frame and lens pairings.',
+        discountType: 'Percentage',
+        discountValue: 15.0,
+        minimumPurchase: 3000,
+        maximumDiscount: 2000,
+        startDate: new Date('2026-01-01'),
+        endDate: new Date('2026-12-31'),
+        usageLimit: 500,
+        usedCount: 28,
+        isActive: true,
+        coupons: {
+          create: [
+            {
+              code: 'FESTIVE15',
+              offerName: 'Festive Eyewear Celebration',
+              usageLimit: 500,
+              perCustomerLimit: 2,
+              usedCount: 28,
+              expiryDate: new Date('2026-12-31'),
+              isActive: true,
+            },
+          ],
+        },
       },
-    },
-  });
+    });
 
-  await prisma.offer.create({
-    data: {
-      name: 'Welcome In-Store Privilege',
-      description: 'Flat ₹500 discount on first in-store purchase above ₹4,000.',
-      discountType: 'Fixed_Amount',
-      discountValue: 500.0,
-      minimumPurchase: 4000,
-      startDate: new Date('2026-01-01'),
-      endDate: new Date('2026-12-31'),
-      usageLimit: 200,
-      usedCount: 14,
-      isActive: true,
-      coupons: {
-        create: [
-          {
-            code: 'WELCOME500',
-            offerName: 'Welcome In-Store Privilege',
-            usageLimit: 200,
-            perCustomerLimit: 1,
-            usedCount: 14,
-            expiryDate: new Date('2026-12-31'),
-            isActive: true,
-          },
-        ],
+    await prisma.offer.create({
+      data: {
+        name: 'Welcome In-Store Privilege',
+        description: 'Flat ₹500 discount on first in-store purchase above ₹4,000.',
+        discountType: 'Fixed_Amount',
+        discountValue: 500.0,
+        minimumPurchase: 4000,
+        startDate: new Date('2026-01-01'),
+        endDate: new Date('2026-12-31'),
+        usageLimit: 200,
+        usedCount: 14,
+        isActive: true,
+        coupons: {
+          create: [
+            {
+              code: 'WELCOME500',
+              offerName: 'Welcome In-Store Privilege',
+              usageLimit: 200,
+              perCustomerLimit: 1,
+              usedCount: 14,
+              expiryDate: new Date('2026-12-31'),
+              isActive: true,
+            },
+          ],
+        },
       },
-    },
-  });
+    });
+  }
 
   // 8. Bookings (Appointments and Reservations)
   console.log('Seeding Bookings...');
-  await prisma.booking.create({
-    data: {
-      referenceNumber: 'APT-2026-1049',
-      bookingType: BookingType.appointment,
-      status: BookingStatus.Confirmed,
-      customerName: 'Aarav Mehta',
-      customerPhone: '9820123456',
-      customerEmail: 'aarav.mehta@gmail.com',
-      appointmentPurpose: 'Comprehensive Eye Exam',
-      appointmentDate: '2026-11-02',
-      timeSlot: '11:00 AM - 11:45 AM',
-      assignedOptometrist: 'Dr. Neha Kulkarni, M.Optom',
-      notes: 'Customer reports occasional eye strain while working on dual 4K monitors.',
-      timeline: [
-        { status: 'Pending', timestamp: new Date('2026-10-24T09:00:00Z').toISOString(), actor: 'Online Customer' },
-        { status: 'Confirmed', timestamp: new Date('2026-10-24T09:15:00Z').toISOString(), actor: 'Store Manager' },
-      ],
-    },
-  });
-
-  const firstVariant = await prisma.productVariant.findFirst();
-  if (firstVariant) {
+  const existingApt = await prisma.booking.findUnique({ where: { referenceNumber: 'APT-2026-1049' } });
+  if (!existingApt) {
     await prisma.booking.create({
       data: {
-        referenceNumber: 'RES-2026-8841',
-        bookingType: BookingType.reservation,
-        status: BookingStatus.Ready_for_pickup,
-        customerName: 'Pooja Sharma',
-        customerPhone: '9819876543',
-        customerEmail: 'pooja.sharma@yahoo.co.in',
-        pickupWindowStart: new Date('2026-10-24T10:00:00Z'),
-        pickupWindowEnd: new Date('2026-10-27T20:00:00Z'),
-        notes: 'Hold for styling consultation and trial.',
-        reservedItems: [
-          {
-            variantId: firstVariant.id,
-            variantSku: firstVariant.variantSku,
-            productName: 'AeroLight Titanium Round',
-            quantity: 1,
-            unitPrice: Number(firstVariant.sellingPrice),
-          },
-        ],
+        referenceNumber: 'APT-2026-1049',
+        bookingType: BookingType.appointment,
+        status: BookingStatus.Confirmed,
+        customerName: 'Aarav Mehta',
+        customerPhone: '9820123456',
+        customerEmail: 'aarav.mehta@gmail.com',
+        appointmentPurpose: 'Comprehensive Eye Exam',
+        appointmentDate: '2026-11-02',
+        timeSlot: '11:00 AM - 11:45 AM',
+        assignedOptometrist: 'Dr. Neha Kulkarni, M.Optom',
+        notes: 'Customer reports occasional eye strain while working on dual 4K monitors.',
         timeline: [
-          { status: 'Pending', timestamp: new Date('2026-10-23T14:00:00Z').toISOString(), actor: 'Online Storefront' },
-          { status: 'Confirmed', timestamp: new Date('2026-10-23T14:10:00Z').toISOString(), actor: 'System' },
-          { status: 'Ready for pickup', timestamp: new Date('2026-10-24T08:30:00Z').toISOString(), actor: 'Aman Patel (Cashier)' },
+          { status: 'Pending', timestamp: new Date('2026-10-24T09:00:00Z').toISOString(), actor: 'Online Customer' },
+          { status: 'Confirmed', timestamp: new Date('2026-10-24T09:15:00Z').toISOString(), actor: 'Store Manager' },
         ],
       },
     });
+
+    const firstVariant = await prisma.productVariant.findFirst();
+    if (firstVariant) {
+      await prisma.booking.create({
+        data: {
+          referenceNumber: 'RES-2026-8841',
+          bookingType: BookingType.reservation,
+          status: BookingStatus.Ready_for_pickup,
+          customerName: 'Pooja Sharma',
+          customerPhone: '9819876543',
+          customerEmail: 'pooja.sharma@yahoo.co.in',
+          pickupWindowStart: new Date('2026-10-24T10:00:00Z'),
+          pickupWindowEnd: new Date('2026-10-27T20:00:00Z'),
+          notes: 'Hold for styling consultation and trial.',
+          reservedItems: [
+            {
+              variantId: firstVariant.id,
+              variantSku: firstVariant.variantSku,
+              productName: 'AeroLight Titanium Round',
+              quantity: 1,
+              unitPrice: Number(firstVariant.sellingPrice),
+            },
+          ],
+          timeline: [
+            { status: 'Pending', timestamp: new Date('2026-10-23T14:00:00Z').toISOString(), actor: 'Online Storefront' },
+            { status: 'Confirmed', timestamp: new Date('2026-10-23T14:10:00Z').toISOString(), actor: 'System' },
+            { status: 'Ready for pickup', timestamp: new Date('2026-10-24T08:30:00Z').toISOString(), actor: 'Aman Patel (Cashier)' },
+          ],
+        },
+      });
+    }
   }
 
   // 9. Initial Audit Log

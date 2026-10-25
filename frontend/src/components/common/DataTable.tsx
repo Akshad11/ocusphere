@@ -32,11 +32,13 @@ export function DataTable<T>({
   onRowClick,
   className = '',
 }: DataTableProps<T>) {
+  const rows = Array.isArray(data) ? data : Array.isArray((data as any)?.items) ? (data as any).items : [];
+
   if (isLoading) {
     return <LoadingState message="Loading records..." />;
   }
 
-  if (!data || data.length === 0) {
+  if (rows.length === 0) {
     return <EmptyState title={emptyTitle} description={emptyMessage} />;
   }
 
@@ -63,7 +65,7 @@ export function DataTable<T>({
           </tr>
         </thead>
         <tbody className="divide-y divide-neutral-200 text-neutral-800">
-          {data.map((row, rIdx) => (
+          {rows.map((row, rIdx) => (
             <tr
               key={keyExtractor(row, rIdx)}
               onClick={() => onRowClick && onRowClick(row)}

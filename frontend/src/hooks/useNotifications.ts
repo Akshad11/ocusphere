@@ -17,7 +17,7 @@ export function useNotifications(params?: {
       setLoading(true);
       setError(null);
       const res = await mockNotificationService.list(params);
-      setNotifications(res);
+      setNotifications(Array.isArray(res) ? res : (res as any)?.items || []);
     } catch (err: any) {
       setError(err?.message || 'Failed to fetch notifications');
     } finally {
@@ -41,5 +41,5 @@ export function useNotifications(params?: {
     return await mockNotificationService.delete(id);
   };
 
-  return { notifications, loading, error, refresh: fetchNotifs, retry, deleteNotification };
+  return { notifications: Array.isArray(notifications) ? notifications : [], loading, error, refresh: fetchNotifs, retry, deleteNotification };
 }

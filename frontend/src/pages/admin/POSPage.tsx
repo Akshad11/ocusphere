@@ -209,7 +209,7 @@ export const POSPage: React.FC = () => {
                       {cust.phone} · {cust.customerCode}
                     </span>
                   </div>
-                  {cust.prescriptions.length > 0 && (
+                  {cust.prescriptions && cust.prescriptions.length > 0 && (
                     <span className="text-[10px] text-blue-700 bg-blue-50 px-2 py-0.5 rounded font-medium">
                       Has Prescription
                     </span>

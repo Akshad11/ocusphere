@@ -60,7 +60,11 @@ export class StaffController {
   @Delete(':id')
   @RequirePermissions(PERMISSION_KEYS.MANAGE_STAFF)
   @ApiOperation({ summary: 'Deactivate a staff member account' })
-  remove(@Param('id') id: string, @CurrentUser('fullName') actorName: string) {
-    return this.staffService.remove(id, actorName);
+  remove(
+    @Param('id') id: string,
+    @CurrentUser('fullName') actorName: string,
+    @CurrentUser('id') currentUserId: string,
+  ) {
+    return this.staffService.remove(id, actorName, currentUserId);
   }
 }

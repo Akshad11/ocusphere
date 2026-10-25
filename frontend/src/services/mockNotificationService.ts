@@ -58,4 +58,7 @@ class MockNotificationServiceImpl implements NotificationService {
   }
 }
 
-export const mockNotificationService = new MockNotificationServiceImpl();
+import { apiNotificationService } from './apiServices';
+
+const isMock = (import.meta as any).env?.VITE_DATA_MODE === 'mock';
+export const mockNotificationService: NotificationService = isMock ? new MockNotificationServiceImpl() : (apiNotificationService as any);

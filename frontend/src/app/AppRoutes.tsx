@@ -19,6 +19,7 @@ import { BookingLookupPage } from '../pages/public/BookingLookupPage';
 import { TermsPage, PrivacyPage } from '../pages/public/PolicyPages';
 
 // Admin Pages
+import { AdminLoginPage } from '../pages/admin/AdminLoginPage';
 import { DashboardPage } from '../pages/admin/DashboardPage';
 import { POSPage } from '../pages/admin/POSPage';
 import { SalesListPage } from '../pages/admin/SalesListPage';
@@ -57,6 +58,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="/" element={<HomePage />} />
         <Route path="/products" element={<ProductListingPage />} />
         <Route path="/products/:id" element={<ProductDetailsPage />} />
+        <Route path="/products/slug/:slug" element={<ProductDetailsPage />} />
         <Route path="/offers" element={<OffersPage />} />
         <Route path="/store" element={<StorePage />} />
         <Route path="/contact" element={<ContactPage />} />
@@ -67,6 +69,9 @@ export const AppRoutes: React.FC = () => {
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
       </Route>
+
+      {/* Admin Authentication */}
+      <Route path="/admin/login" element={<AdminLoginPage />} />
 
       {/* Admin Retail ERP & Point of Sale Experience */}
       <Route path="/admin" element={<AdminLayout />}>

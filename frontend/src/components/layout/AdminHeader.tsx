@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Menu, ShoppingCart, Bell, UserCheck, Shield } from 'lucide-react';
+import { Menu, ShoppingCart, Bell, UserCheck, Shield, LogOut } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { StaffRole } from '../../types/staff.types';
 import { useNotifications } from '../../hooks/useNotifications';
+import { apiClient } from '../../services/apiClient';
 
 interface AdminHeaderProps {
   onToggleSidebar: () => void;
@@ -19,7 +20,8 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   const { notifications } = useNotifications();
   const [showRoleSelect, setShowRoleSelect] = useState(false);
 
-  const pendingNotifs = notifications.filter((n) => n.status === 'Queued' || n.status === 'Failed').length;
+  const notifList = Array.isArray(notifications) ? notifications : [];
+  const pendingNotifs = notifList.filter((n) => n && (n.status === 'Queued' || n.status === 'Failed')).length;
 
   const roles: StaffRole[] = [
     'Owner/Admin',
@@ -104,6 +106,23 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         >
           <ShoppingCart className="w-3.5 h-3.5" />
           <span>Launch POS</span>
+        </button>
+
+        {/* Logout Button */}
+        <button
+          onClick={async () => {
+            try {
+              await apiClient.post('/auth/logout');
+            } catch (_) {}
+            apiClient.setToken(null);
+            localStorage.removeItem('ocusphere_auth_token');
+            localStorage.removeItem('ocusphere_auth_user');
+            navigate('/admin/login');
+          }}
+          className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
+          title="Sign out of Admin session"
+        >
+          <LogOut className="w-4 h-4" />
         </button>
       </div>
     </header>

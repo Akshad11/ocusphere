@@ -32,13 +32,15 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       } else if (typeof res === 'object' && res !== null) {
         const obj = res as Record<string, any>;
         message = obj.message || exception.message;
-        code = obj.error || this.getErrorCodeFromStatus(status);
+        code = this.getErrorCodeFromStatus(status);
         if (Array.isArray(obj.message)) {
           details = obj.message;
           message = 'Validation failed for request parameters.';
           code = 'VALIDATION_ERROR';
         } else if (obj.details) {
           details = obj.details;
+        } else if (obj.code) {
+          code = String(obj.code).toUpperCase().replace(/\s+/g, '_');
         }
       }
     } else {

@@ -11,9 +11,10 @@ import { Button } from '../../components/common/Button';
 import { ShieldCheck, Calendar, ArrowLeft, Check, Sparkles, Store } from 'lucide-react';
 
 export const ProductDetailsPage: React.FC = () => {
-  const { slug } = useParams<{ slug: string }>();
+  const { id, slug } = useParams<{ id?: string; slug?: string }>();
+  const identifier = id || slug || '';
   const navigate = useNavigate();
-  const { product, loading, error } = useProduct(slug || '', true);
+  const { product, loading, error } = useProduct(identifier);
 
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
 
@@ -30,8 +31,9 @@ export const ProductDetailsPage: React.FC = () => {
     );
   }
 
-  const activeVariant = selectedVariant || product.variants[0];
-  const availableStock = activeVariant ? activeVariant.stockOnHand - activeVariant.reservedQuantity : 0;
+  const variantsList = Array.isArray(product.variants) ? product.variants : [];
+  const activeVariant = selectedVariant || variantsList[0];
+  const availableStock = activeVariant ? (activeVariant.stockOnHand || 0) - (activeVariant.reservedQuantity || 0) : 0;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 text-left">
@@ -52,7 +54,7 @@ export const ProductDetailsPage: React.FC = () => {
         {/* Left: Sticky Image Gallery */}
         <div className="lg:col-span-7">
           <ProductGallery
-            images={activeVariant?.images?.length ? activeVariant.images : product.images}
+            images={activeVariant?.images?.length ? activeVariant.images : (product.images || [])}
             productName={product.name}
             modelCode={product.modelCode}
           />
@@ -88,7 +90,7 @@ export const ProductDetailsPage: React.FC = () => {
           {/* Variant Selector */}
           <div className="border-t border-neutral-200 pt-4">
             <VariantSelector
-              variants={product.variants}
+              variants={variantsList}
               selectedVariantId={activeVariant?.id || ''}
               onSelectVariant={setSelectedVariant}
             />

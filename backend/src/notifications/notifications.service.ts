@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 export interface NotificationProvider {
@@ -60,7 +60,7 @@ export class NotificationsService {
 
   async retry(id: string) {
     const notif = await this.prisma.notificationLog.findUnique({ where: { id } });
-    if (!notif) throw new Error(`Notification ${id} not found.`);
+    if (!notif) throw new NotFoundException(`Notification ${id} not found.`);
 
     return this.prisma.notificationLog.update({
       where: { id },

@@ -25,10 +25,15 @@ export const StockRequestsPage: React.FC = () => {
   });
 
   useEffect(() => {
-    mockInventoryService.getStockRequests().then((data) => {
-      setRequests(data);
-      setLoading(false);
-    });
+    mockInventoryService.getStockRequests()
+      .then((data) => {
+        setRequests(Array.isArray(data) ? data : (data as any)?.items || []);
+        setLoading(false);
+      })
+      .catch(() => {
+        setRequests([]);
+        setLoading(false);
+      });
   }, []);
 
   const handleApprove = async (id: string) => {
@@ -70,7 +75,8 @@ export const StockRequestsPage: React.FC = () => {
     setIsModalOpen(false);
   };
 
-  const filtered = requests.filter((r) => statusFilter === 'ALL' || r.status.toUpperCase() === statusFilter);
+  const requestsList = Array.isArray(requests) ? requests : [];
+  const filtered = requestsList.filter((r) => statusFilter === 'ALL' || r.status.toUpperCase() === statusFilter);
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -103,7 +109,7 @@ export const StockRequestsPage: React.FC = () => {
               statusFilter === st ? 'bg-neutral-900 text-white' : 'text-neutral-600 hover:bg-neutral-100'
             }`}
           >
-            {st} ({st === 'ALL' ? requests.length : requests.filter((r) => r.status.toUpperCase() === st).length})
+            {st} ({st === 'ALL' ? requestsList.length : requestsList.filter((r) => r.status.toUpperCase() === st).length})
           </button>
         ))}
       </div>
@@ -125,7 +131,8 @@ export const StockRequestsPage: React.FC = () => {
           </thead>
           <tbody className="divide-y divide-neutral-200">
             {filtered.map((r) => {
-              const totalItems = r.items.reduce((acc, i) => acc + i.requestedQuantity, 0);
+              const rItems = Array.isArray(r.items) ? r.items : [];
+              const totalItems = rItems.reduce((acc, i) => acc + (i.requestedQuantity || 0), 0);
 
               return (
                 <tr key={r.id} className="hover:bg-neutral-50/70">
@@ -135,7 +142,7 @@ export const StockRequestsPage: React.FC = () => {
                   </td>
                   <td className="py-3 px-4 text-xs font-medium text-neutral-900">{r.requestedBy}</td>
                   <td className="py-3 px-4">
-                    {r.items.map((it) => (
+                    {rItems.map((it) => (
                       <div key={it.id || it.variantSku} className="text-xs">
                         <span className="font-semibold text-neutral-900">{it.productName}</span>
                         <span className="text-neutral-500 font-mono ml-1">({it.variantSku}) &times; {it.requestedQuantity}</span>

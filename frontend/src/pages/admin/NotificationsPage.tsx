@@ -9,7 +9,8 @@ export const NotificationsPage: React.FC = () => {
   const { notifications, loading, refresh, retry, deleteNotification } = useNotifications();
   const [filterChannel, setFilterChannel] = useState<'all' | NotificationChannel>('all');
 
-  const filtered = notifications.filter((n) => filterChannel === 'all' || n.channel === filterChannel);
+  const notifList = Array.isArray(notifications) ? notifications : [];
+  const filtered = notifList.filter((n) => filterChannel === 'all' || n.channel === filterChannel);
 
   const getIcon = (template: string) => {
     switch (template) {
@@ -55,7 +56,7 @@ export const NotificationsPage: React.FC = () => {
                 : 'text-neutral-500 hover:text-neutral-800'
             }`}
           >
-            {ch === 'all' ? 'All Channels' : ch} ({ch === 'all' ? notifications.length : notifications.filter((n) => n.channel === ch).length})
+            {ch === 'all' ? 'All Channels' : ch} ({ch === 'all' ? notifList.length : notifList.filter((n) => n.channel === ch).length})
           </button>
         ))}
       </div>

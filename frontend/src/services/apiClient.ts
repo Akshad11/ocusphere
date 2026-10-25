@@ -32,7 +32,7 @@ class ApiClient {
   private baseUrl: string;
 
   constructor() {
-    this.baseUrl = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:3001/api/v1';
+    this.baseUrl = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:3005/api/v1';
   }
 
   public getBaseUrl(): string {

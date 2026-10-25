@@ -18,7 +18,7 @@ export function useBookings(params?: {
       setLoading(true);
       setError(null);
       const res = await mockBookingService.list(params);
-      setBookings(res);
+      setBookings(Array.isArray(res) ? res : (res as any)?.items || []);
     } catch (err: any) {
       setError(err?.message || 'Failed to fetch bookings');
     } finally {
@@ -51,7 +51,7 @@ export function useBookings(params?: {
   };
 
   return {
-    bookings,
+    bookings: Array.isArray(bookings) ? bookings : [],
     loading,
     error,
     refresh: fetchBookings,

@@ -17,8 +17,8 @@ export function useOffers(params?: { search?: string; isActive?: boolean }) {
         mockOfferService.listOffers(params),
         mockOfferService.listCoupons(params),
       ]);
-      setOffers(oList);
-      setCoupons(cList);
+      setOffers(Array.isArray(oList) ? oList : (oList as any)?.items || []);
+      setCoupons(Array.isArray(cList) ? cList : (cList as any)?.items || []);
     } catch (err: any) {
       setError(err?.message || 'Failed to load offers');
     } finally {
@@ -51,8 +51,8 @@ export function useOffers(params?: { search?: string; isActive?: boolean }) {
   };
 
   return {
-    offers,
-    coupons,
+    offers: Array.isArray(offers) ? offers : [],
+    coupons: Array.isArray(coupons) ? coupons : [],
     loading,
     error,
     refresh: fetchOffers,

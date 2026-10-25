@@ -23,7 +23,7 @@ export const SupplierDetailsPage: React.FC = () => {
       ])
         .then(([s, pos]) => {
           setSupplier(s || null);
-          setOrders(pos);
+          setOrders(Array.isArray(pos) ? pos : (pos as any)?.items || []);
           setLoading(false);
         })
         .catch(() => {
@@ -47,7 +47,8 @@ export const SupplierDetailsPage: React.FC = () => {
     );
   }
 
-  const totalSpend = orders.reduce((acc, po: PurchaseOrder) => acc + po.totalCost, 0);
+  const ordersList = Array.isArray(orders) ? orders : [];
+  const totalSpend = ordersList.reduce((acc, po: PurchaseOrder) => acc + (po.totalCost || 0), 0);
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -76,7 +77,7 @@ export const SupplierDetailsPage: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white border border-neutral-200 p-4">
           <span className="text-xs text-neutral-500 uppercase tracking-wider block mb-1">Total Orders</span>
-          <div className="text-2xl font-bold font-mono text-neutral-900">{orders.length}</div>
+          <div className="text-2xl font-bold font-mono text-neutral-900">{ordersList.length}</div>
           <span className="text-xs text-neutral-400">POs Issued</span>
         </div>
         <div className="bg-white border border-neutral-200 p-4">
@@ -122,11 +123,11 @@ export const SupplierDetailsPage: React.FC = () => {
         <div className="md:col-span-2 bg-white border border-neutral-200 p-5 space-y-4">
           <div className="flex items-center justify-between border-b border-neutral-100 pb-2">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Purchase Order History</h2>
-            <span className="text-xs text-neutral-500">{orders.length} orders recorded</span>
+            <span className="text-xs text-neutral-500">{ordersList.length} orders recorded</span>
           </div>
 
           <div className="space-y-3">
-            {orders.map((po) => (
+            {ordersList.map((po) => (
               <div key={po.id} className="p-3 border border-neutral-200 flex items-center justify-between hover:bg-neutral-50">
                 <div>
                   <div className="flex items-center gap-2">
@@ -151,7 +152,7 @@ export const SupplierDetailsPage: React.FC = () => {
               </div>
             ))}
 
-            {orders.length === 0 && (
+            {ordersList.length === 0 && (
               <p className="text-xs text-neutral-500 py-4 text-center">No purchase orders issued to this vendor yet.</p>
             )}
           </div>

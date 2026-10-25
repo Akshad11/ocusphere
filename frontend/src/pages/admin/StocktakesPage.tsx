@@ -19,11 +19,17 @@ export const StocktakesPage: React.FC = () => {
   const [auditedBy, setAuditedBy] = useState('Rahul Verma (Store Manager)');
 
   useEffect(() => {
-    mockInventoryService.getStocktakes().then((data) => {
-      setSessions(data);
-      if (data.length > 0) setSelectedSession(data[0]);
-      setLoading(false);
-    });
+    mockInventoryService.getStocktakes()
+      .then((data) => {
+        const list = Array.isArray(data) ? data : (data as any)?.items || [];
+        setSessions(list);
+        if (list.length > 0) setSelectedSession(list[0]);
+        setLoading(false);
+      })
+      .catch(() => {
+        setSessions([]);
+        setLoading(false);
+      });
   }, []);
 
   const handleCreateSession = async () => {
@@ -139,7 +145,7 @@ export const StocktakesPage: React.FC = () => {
 
             <div className="flex items-center justify-between pt-3 border-t border-neutral-100 text-xs">
               <span className="text-neutral-500">
-                Audited: <strong className="text-neutral-900 font-mono">{session.items.length}</strong> items
+                Audited: <strong className="text-neutral-900 font-mono">{(session.items || []).length}</strong> items
               </span>
               <span className={session.totalVarianceCount > 0 ? 'text-red-600 font-bold' : 'text-emerald-700'}>
                 {session.totalVarianceCount} Discrepancies

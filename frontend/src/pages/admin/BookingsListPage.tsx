@@ -205,7 +205,7 @@ export const BookingsListPage: React.FC = () => {
       {viewMode === 'table' ? (
         <DataTable
           columns={columns}
-          data={bookings}
+          data={Array.isArray(bookings) ? bookings : []}
           keyExtractor={(b) => b.id}
           isLoading={loading}
           onRowClick={(b) => navigate(`/admin/bookings/${b.id}`)}
@@ -214,7 +214,8 @@ export const BookingsListPage: React.FC = () => {
         /* Schedule View */
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {(['Pending', 'Confirmed', 'Ready for pickup'] as const).map((colStatus) => {
-            const list = bookings.filter((b) => b.status === colStatus);
+            const bookingList = Array.isArray(bookings) ? bookings : [];
+            const list = bookingList.filter((b) => b.status === colStatus);
             return (
               <div key={colStatus} className="bg-neutral-50 border border-neutral-200 rounded-lg p-4 space-y-3">
                 <div className="flex items-center justify-between pb-2 border-b border-neutral-200">

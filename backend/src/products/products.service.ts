@@ -363,11 +363,13 @@ export class ProductsService {
 
     // Check if variants have historical sale items
     const variantIds = product.variants.map((v) => v.id);
-    const saleItemsCount = await this.prisma.saleItem.count({
-      where: { variantId: { in: variantIds } },
-    });
+    const [saleItemsCount, movementCount, poItemsCount] = await Promise.all([
+      this.prisma.saleItem.count({ where: { variantId: { in: variantIds } } }),
+      this.prisma.stockMovement.count({ where: { variantId: { in: variantIds } } }),
+      this.prisma.purchaseOrderItem.count({ where: { variantId: { in: variantIds } } }),
+    ]);
 
-    if (saleItemsCount > 0) {
+    if (saleItemsCount > 0 || movementCount > 0 || poItemsCount > 0) {
       // Soft-archive to preserve fiscal and audit integrity
       await this.prisma.product.update({
         where: { id },
@@ -381,14 +383,17 @@ export class ProductsService {
           action: 'UPDATE',
           entity: 'Product',
           entityId: id,
-          summary: `Archived product ${product.name} (preserved historical sales reference)`,
+          summary: `Archived product ${product.name} (preserved historical stock ledger and records)`,
         },
       });
 
-      return { message: 'Product archived because historical sales reference exists.' };
+      return { message: 'Product archived because historical stock ledger or transactions exist.' };
     }
 
-    await this.prisma.product.delete({ where: { id } });
+    await this.prisma.$transaction(async (tx) => {
+      await tx.productVariant.deleteMany({ where: { productId: id } });
+      await tx.product.delete({ where: { id } });
+    });
 
     await this.prisma.auditLog.create({
       data: {

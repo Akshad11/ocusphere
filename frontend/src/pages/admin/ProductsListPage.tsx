@@ -67,11 +67,14 @@ export const ProductsListPage: React.FC = () => {
     {
       header: 'Variants',
       align: 'center',
-      render: (p) => (
-        <span className="font-mono text-xs text-neutral-700">
-          {p.variants.length} {p.variants.length === 1 ? 'variant' : 'variants'}
-        </span>
-      ),
+      render: (p) => {
+        const vList = Array.isArray(p.variants) ? p.variants : [];
+        return (
+          <span className="font-mono text-xs text-neutral-700">
+            {vList.length} {vList.length === 1 ? 'variant' : 'variants'}
+          </span>
+        );
+      },
     },
     {
       header: 'Base Price',
@@ -86,8 +89,9 @@ export const ProductsListPage: React.FC = () => {
       header: 'Total Stock',
       align: 'right',
       render: (p) => {
-        const total = p.variants.reduce((acc, v) => acc + v.stockOnHand, 0);
-        const reserved = p.variants.reduce((acc, v) => acc + v.reservedQuantity, 0);
+        const vList = Array.isArray(p.variants) ? p.variants : [];
+        const total = vList.reduce((acc, v) => acc + (v.stockOnHand || 0), 0);
+        const reserved = vList.reduce((acc, v) => acc + (v.reservedQuantity || 0), 0);
         const available = total - reserved;
         return (
           <div className="text-right">

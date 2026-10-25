@@ -19,7 +19,25 @@ export function useCustomers(params?: { search?: string; page?: number; pageSize
       setLoading(true);
       setError(null);
       const res = await mockCustomerService.list(params);
-      setData(res);
+      if (Array.isArray(res)) {
+        setData({
+          items: res,
+          total: res.length,
+          page: 1,
+          pageSize: res.length,
+          totalPages: 1,
+        });
+      } else if (res && Array.isArray(res.items)) {
+        setData(res);
+      } else {
+        setData({
+          items: [],
+          total: 0,
+          page: 1,
+          pageSize: 10,
+          totalPages: 1,
+        });
+      }
     } catch (err: any) {
       setError(err?.message || 'Failed to load customers');
     } finally {
@@ -45,7 +63,7 @@ export function useCustomers(params?: { search?: string; page?: number; pageSize
 
   return {
     ...data,
-    customers: data.items,
+    customers: data?.items || [],
     loading,
     error,
     refresh: fetchCustomers,

@@ -92,11 +92,14 @@ export const CustomersListPage: React.FC = () => {
     {
       header: 'Prescriptions',
       align: 'center',
-      render: (c) => (
-        <span className="font-mono text-xs tabular-nums text-neutral-700">
-          {c.prescriptions.length} {c.prescriptions.length === 1 ? 'Rx' : 'Rx entries'}
-        </span>
-      ),
+      render: (c) => {
+        const count = Array.isArray(c.prescriptions) ? c.prescriptions.length : 0;
+        return (
+          <span className="font-mono text-xs tabular-nums text-neutral-700">
+            {count} {count === 1 ? 'Rx' : 'Rx entries'}
+          </span>
+        );
+      },
     },
     {
       header: 'Visits',

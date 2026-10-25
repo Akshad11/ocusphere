@@ -47,7 +47,12 @@ export const ProductCreateEditPage: React.FC = () => {
 
   useEffect(() => {
     if (isEditing && id) {
-      mockProductService.getById(id)
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      const fetchPromise = isUuid
+        ? mockProductService.getById(id).catch(() => mockProductService.getBySlug(id))
+        : mockProductService.getBySlug(id).catch(() => mockProductService.getById(id));
+
+      fetchPromise
         .then((p) => {
           if (p) {
             setFormData({
@@ -59,8 +64,8 @@ export const ProductCreateEditPage: React.FC = () => {
               basePrice: p.basePrice,
               description: p.description,
               status: p.status,
-              images: p.images.length > 0 ? p.images : ['https://images.unsplash.com/photo-1574258495973-f010dfbb5371?auto=format&fit=crop&w=600&q=80'],
-              variants: p.variants.map((v) => ({
+              images: p.images && p.images.length > 0 ? p.images : ['https://images.unsplash.com/photo-1574258495973-f010dfbb5371?auto=format&fit=crop&w=600&q=80'],
+              variants: (p.variants || []).map((v) => ({
                 variantSku: v.variantSku,
                 barcode: v.barcode,
                 colorName: v.colorName,
@@ -82,6 +87,8 @@ export const ProductCreateEditPage: React.FC = () => {
           setError('Product not found');
           setLoading(false);
         });
+    } else {
+      setLoading(false);
     }
   }, [id, isEditing]);
 
@@ -118,7 +125,7 @@ export const ProductCreateEditPage: React.FC = () => {
       variants: [
         ...prev.variants,
         {
-          variantSku: `${prev.modelCode}-TOR-${prev.variants.length + 1}`,
+          variantSku: `${prev.modelCode}-TOR-${(prev.variants || []).length + 1}`,
           barcode: `890${Math.floor(100000000 + Math.random() * 900000000)}`,
           colorName: 'Tortoise Brown',
           colorHex: '#603813',
@@ -136,7 +143,7 @@ export const ProductCreateEditPage: React.FC = () => {
   };
 
   const removeVariant = (index: number) => {
-    if (formData.variants.length <= 1) {
+    if ((formData.variants || []).length <= 1) {
       alert('At least one variant is required.');
       return;
     }
@@ -298,7 +305,7 @@ export const ProductCreateEditPage: React.FC = () => {
                       Variant #{idx + 1}: {v.colorName} ({v.size})
                     </span>
                   </div>
-                  {formData.variants.length > 1 && (
+                  {(formData.variants || []).length > 1 && (
                     <button
                       type="button"
                       onClick={() => removeVariant(idx)}

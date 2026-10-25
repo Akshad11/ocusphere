@@ -17,8 +17,8 @@ export function useSales(params?: { search?: string; status?: string; paymentMet
         mockSalesService.list(params),
         mockSalesService.listReturns(),
       ]);
-      setSales(sList);
-      setReturns(rList);
+      setSales(Array.isArray(sList) ? sList : (sList as any)?.items || []);
+      setReturns(Array.isArray(rList) ? rList : (rList as any)?.items || []);
     } catch (err: any) {
       setError(err?.message || 'Failed to fetch sales');
     } finally {
@@ -54,8 +54,8 @@ export function useSales(params?: { search?: string; status?: string; paymentMet
   };
 
   return {
-    sales,
-    returns,
+    sales: Array.isArray(sales) ? sales : [],
+    returns: Array.isArray(returns) ? returns : [],
     loading,
     error,
     refresh: fetchSales,

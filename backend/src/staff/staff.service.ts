@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateStaffDto } from './dto/create-staff.dto';
@@ -179,7 +180,11 @@ export class StaffService {
     };
   }
 
-  async remove(id: string, actorName: string = 'Admin User') {
+  async remove(id: string, actorName: string = 'Admin User', currentUserId?: string) {
+    if (currentUserId && id === currentUserId) {
+      throw new BadRequestException('You cannot deactivate your own active administrative account.');
+    }
+
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
       throw new NotFoundException(`Staff member with ID ${id} not found.`);

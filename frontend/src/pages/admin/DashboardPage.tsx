@@ -39,12 +39,19 @@ export const DashboardPage: React.FC = () => {
     mockReportService.getTopSellingProducts(5).then(setTopProducts);
   }, [sales]);
 
+  const safeStockRows = Array.isArray(stockRows) ? stockRows : [];
+  const safeRequests = Array.isArray(requests) ? requests : [];
+  const safeBookings = Array.isArray(bookings) ? bookings : [];
+  const safeSales = Array.isArray(sales) ? sales : [];
+  const safeMovements = Array.isArray(movements) ? movements : [];
+  const safeTopProducts = Array.isArray(topProducts) ? topProducts : [];
+
   // Derived metrics from real store state
-  const lowStockCount = stockRows.filter((r) => r.stockStatus === 'Low Stock' || r.stockStatus === 'Out of Stock').length;
-  const pendingRequestsCount = requests.filter((r) => r.status === 'Submitted' || r.status === 'Draft').length;
-  const readyPickupCount = bookings.filter((b) => b.status === 'Ready for pickup').length;
-  const activeBookingsCount = bookings.filter((b) => b.status === 'Pending' || b.status === 'Confirmed' || b.status === 'Arrived').length;
-  const pendingReservationsCount = bookings.filter((b) => b.bookingType === 'reservation' && (b.status === 'Pending' || b.status === 'Preparing')).length;
+  const lowStockCount = safeStockRows.filter((r) => r.stockStatus === 'Low Stock' || r.stockStatus === 'Out of Stock').length;
+  const pendingRequestsCount = safeRequests.filter((r) => r.status === 'Submitted' || r.status === 'Draft').length;
+  const readyPickupCount = safeBookings.filter((b) => b.status === 'Ready for pickup').length;
+  const activeBookingsCount = safeBookings.filter((b) => b.status === 'Pending' || b.status === 'Confirmed' || b.status === 'Arrived').length;
+  const pendingReservationsCount = safeBookings.filter((b) => b.bookingType === 'reservation' && (b.status === 'Pending' || b.status === 'Preparing')).length;
 
   return (
     <div className="space-y-6 text-left">
@@ -224,7 +231,7 @@ export const DashboardPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100">
-                {sales.slice(0, 5).map((sale) => (
+                {safeSales.slice(0, 5).map((sale) => (
                   <tr
                     key={sale.id}
                     onClick={() => navigate(`/admin/sales/${sale.id}`)}
@@ -260,7 +267,7 @@ export const DashboardPage: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              {topProducts.map((p, idx) => (
+              {safeTopProducts.map((p, idx) => (
                 <div key={idx} className="flex items-center justify-between text-xs">
                   <div>
                     <span className="font-bold text-neutral-900 block truncate max-w-[200px]">
@@ -291,7 +298,7 @@ export const DashboardPage: React.FC = () => {
             </div>
 
             <div className="space-y-2 text-xs">
-              {movements.slice(0, 4).map((m) => (
+              {safeMovements.slice(0, 4).map((m) => (
                 <div key={m.id} className="flex items-center justify-between py-1 border-b border-neutral-50 last:border-0">
                   <div className="truncate pr-2">
                     <span className="font-medium text-neutral-900 block truncate">{m.productName}</span>

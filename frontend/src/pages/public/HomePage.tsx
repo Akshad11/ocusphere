@@ -132,13 +132,13 @@ export const HomePage: React.FC = () => {
             to="/products"
             className="text-xs font-semibold text-neutral-900 hover:underline flex items-center gap-1 shrink-0"
           >
-            <span>Browse Full Catalogue ({products.length} Models)</span>
+            <span>Browse Full Catalogue ({(products || []).length} Models)</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
         <ProductGrid
-          products={products.slice(0, 8)}
+          products={(products || []).slice(0, 8)}
           onQuickReserve={(p) => navigate(`/book/reservation?product=${p.id}`)}
         />
       </section>

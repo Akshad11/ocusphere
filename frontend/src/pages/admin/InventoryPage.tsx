@@ -40,9 +40,10 @@ export const InventoryPage: React.FC = () => {
     return matchesSearch && matchesCategory && matchesStock;
   });
 
-  const totalQuantity = stockRows.reduce((acc, i) => acc + i.stockOnHand, 0);
-  const lowStockCount = stockRows.filter((i) => i.stockStatus === 'Low Stock').length;
-  const outOfStockCount = stockRows.filter((i) => i.stockStatus === 'Out of Stock').length;
+  const rowsList = Array.isArray(stockRows) ? stockRows : [];
+  const totalQuantity = rowsList.reduce((acc, i) => acc + (i.stockOnHand || 0), 0);
+  const lowStockCount = rowsList.filter((i) => i.stockStatus === 'Low Stock').length;
+  const outOfStockCount = rowsList.filter((i) => i.stockStatus === 'Out of Stock').length;
 
   const handleOpenAdjust = (item: InventoryItemRow) => {
     setSelectedItem(item);
@@ -118,7 +119,7 @@ export const InventoryPage: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white border border-neutral-200 p-4">
           <span className="text-xs text-neutral-500 uppercase tracking-wider block mb-1">Total SKU Items</span>
-          <div className="text-2xl font-bold font-mono text-neutral-900">{stockRows.length}</div>
+          <div className="text-2xl font-bold font-mono text-neutral-900">{rowsList.length}</div>
           <span className="text-xs text-neutral-400">Unique product variants</span>
         </div>
         <div className="bg-white border border-neutral-200 p-4">

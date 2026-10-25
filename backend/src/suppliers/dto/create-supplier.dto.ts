@@ -1,5 +1,5 @@
 import { IsString, IsNotEmpty, IsEmail, IsOptional, IsBoolean } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 
 export class CreateSupplierDto {
   @ApiProperty({ example: 'Luxottica India Eyewear Pvt Ltd' })
@@ -58,4 +58,4 @@ export class CreateSupplierDto {
   notes?: string;
 }
 
-export class UpdateSupplierDto extends CreateSupplierDto {}
+export class UpdateSupplierDto extends PartialType(CreateSupplierDto) {}

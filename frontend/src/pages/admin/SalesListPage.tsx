@@ -71,11 +71,14 @@ export const SalesListPage: React.FC = () => {
     },
     {
       header: 'Items',
-      render: (s) => (
-        <span className="text-xs text-neutral-600">
-          {s.items.length} {s.items.length === 1 ? 'item' : 'items'}
-        </span>
-      ),
+      render: (s) => {
+        const count = Array.isArray(s.items) ? s.items.length : 0;
+        return (
+          <span className="text-xs text-neutral-600">
+            {count} {count === 1 ? 'item' : 'items'}
+          </span>
+        );
+      },
     },
     {
       header: 'Mode',

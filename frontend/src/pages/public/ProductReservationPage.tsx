@@ -35,24 +35,24 @@ export const ProductReservationPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!selectedProductId && products.length > 0) {
+    if (!selectedProductId && (products || []).length > 0) {
       setSelectedProductId(products[0].id);
     }
   }, [products, selectedProductId]);
 
-  const selectedProduct = products.find((p) => p.id === selectedProductId);
+  const selectedProduct = (products || []).find((p) => p.id === selectedProductId);
 
   useEffect(() => {
-    if (selectedProduct && selectedProduct.variants.length > 0) {
+    if (selectedProduct && (selectedProduct.variants || []).length > 0) {
       if (!selectedVariantId || !selectedProduct.variants.some((v) => v.id === selectedVariantId)) {
         setSelectedVariantId(selectedProduct.variants[0].id);
       }
     }
   }, [selectedProduct, selectedVariantId]);
 
-  const selectedVariant = selectedProduct?.variants.find((v) => v.id === selectedVariantId);
+  const selectedVariant = selectedProduct?.variants?.find((v) => v.id === selectedVariantId);
 
-  const productOptions = products.map((p) => ({
+  const productOptions = (products || []).map((p) => ({
     label: `${p.brand} - ${p.name} (${p.modelCode})`,
     value: p.id,
   }));

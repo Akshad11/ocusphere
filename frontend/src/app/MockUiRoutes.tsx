@@ -57,6 +57,7 @@ export const MockUiRoutes: React.FC = () => {
         <Route path="/" element={<HomePage />} />
         <Route path="/products" element={<ProductListingPage />} />
         <Route path="/products/:id" element={<ProductDetailsPage />} />
+        <Route path="/products/slug/:slug" element={<ProductDetailsPage />} />
         <Route path="/offers" element={<OffersPage />} />
         <Route path="/store" element={<StorePage />} />
         <Route path="/contact" element={<ContactPage />} />

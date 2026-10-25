@@ -155,17 +155,17 @@ export const CustomerDetailsPage: React.FC = () => {
                 <h3 className="text-sm font-bold text-neutral-900">Optical Prescription History</h3>
               </div>
               <span className="text-xs text-neutral-500 font-mono">
-                {customer.prescriptions.length} Recorded Refractions
+                {(customer.prescriptions || []).length} Recorded Refractions
               </span>
             </div>
 
-            {customer.prescriptions.length === 0 ? (
+            {(customer.prescriptions || []).length === 0 ? (
               <div className="py-8 text-center text-xs text-neutral-400">
                 No optical prescriptions recorded yet. Click "Record New Prescription" to add doctor notes.
               </div>
             ) : (
               <div className="space-y-4">
-                {customer.prescriptions.map((rx) => (
+                {(customer.prescriptions || []).map((rx) => (
                   <div key={rx.id} className="p-4 border border-neutral-200 rounded-lg bg-neutral-50/50 space-y-3">
                     <div className="flex items-center justify-between text-xs">
                       <div>
@@ -223,12 +223,12 @@ export const CustomerDetailsPage: React.FC = () => {
             <div className="bg-white border border-neutral-200 rounded-lg p-4 space-y-2 text-xs">
               <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
                 <span className="font-bold text-neutral-900">Purchase Invoices</span>
-                <span className="font-mono">{customerSales.length}</span>
+                <span className="font-mono">{(customerSales || []).length}</span>
               </div>
-              {customerSales.length === 0 ? (
+              {(customerSales || []).length === 0 ? (
                 <p className="text-neutral-400 py-3 text-center">No purchases recorded</p>
               ) : (
-                customerSales.map((s) => (
+                (customerSales || []).map((s) => (
                   <Link
                     key={s.id}
                     to={`/admin/sales/${s.id}`}
@@ -245,12 +245,12 @@ export const CustomerDetailsPage: React.FC = () => {
             <div className="bg-white border border-neutral-200 rounded-lg p-4 space-y-2 text-xs">
               <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
                 <span className="font-bold text-neutral-900">Bookings & Pickups</span>
-                <span className="font-mono">{customerBookings.length}</span>
+                <span className="font-mono">{(customerBookings || []).length}</span>
               </div>
-              {customerBookings.length === 0 ? (
+              {(customerBookings || []).length === 0 ? (
                 <p className="text-neutral-400 py-3 text-center">No bookings on file</p>
               ) : (
-                customerBookings.map((b) => (
+                (customerBookings || []).map((b) => (
                   <Link
                     key={b.id}
                     to={`/admin/bookings/${b.id}`}

@@ -14,14 +14,21 @@ export const ProductDetailsAdminPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (id) {
-      mockProductService.getById(id)
-        .then((p) => {
-          setProduct(p);
-          setLoading(false);
-        })
-        .catch(() => setLoading(false));
+    if (!id) {
+      setLoading(false);
+      return;
     }
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    const fetchPromise = isUuid
+      ? mockProductService.getById(id).catch(() => mockProductService.getBySlug(id))
+      : mockProductService.getBySlug(id).catch(() => mockProductService.getById(id));
+
+    fetchPromise
+      .then((p) => {
+        setProduct(p);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, [id]);
 
   const handleDelete = async () => {
@@ -47,8 +54,9 @@ export const ProductDetailsAdminPage: React.FC = () => {
     );
   }
 
-  const totalStock = product.variants.reduce((acc, v) => acc + v.stockOnHand, 0);
-  const defaultVariant = product.variants[0];
+  const variantsList = Array.isArray(product.variants) ? product.variants : [];
+  const totalStock = variantsList.reduce((acc, v) => acc + (v.stockOnHand || 0), 0);
+  const defaultVariant = variantsList[0];
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -70,7 +78,7 @@ export const ProductDetailsAdminPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <Link to={`/products/${product.id}`} target="_blank">
+          <Link to={`/products/${product.slug || product.id}`} target="_blank">
             <Button variant="outline" size="sm">
               <ExternalLink className="w-4 h-4 mr-1.5" /> Customer View
             </Button>
@@ -109,7 +117,7 @@ export const ProductDetailsAdminPage: React.FC = () => {
         <div className="bg-white border border-neutral-200 p-4">
           <span className="text-xs text-neutral-500 uppercase tracking-wider block mb-1">Total Available Stock</span>
           <div className="text-xl font-bold font-mono text-neutral-900">{totalStock} units</div>
-          <span className="text-xs text-neutral-500">Across {product.variants.length} color variants</span>
+          <span className="text-xs text-neutral-500">Across {variantsList.length} color variants</span>
         </div>
 
         <div className="bg-white border border-neutral-200 p-4">
@@ -166,11 +174,11 @@ export const ProductDetailsAdminPage: React.FC = () => {
             <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-900">
               Variant Inventory & Colorways
             </h2>
-            <span className="text-xs text-neutral-500">{product.variants.length} Registered</span>
+            <span className="text-xs text-neutral-500">{variantsList.length} Registered</span>
           </div>
 
           <div className="space-y-4">
-            {product.variants.map((v) => (
+            {variantsList.map((v) => (
               <div key={v.id} className="border border-neutral-200 p-4 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 bg-neutral-100 border border-neutral-200 flex items-center justify-center overflow-hidden shrink-0">

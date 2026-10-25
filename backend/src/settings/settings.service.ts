@@ -60,11 +60,33 @@ export class SettingsService {
     if (dto.enableWhatsappNotifications !== undefined) updateData.enableWhatsappNotifications = dto.enableWhatsappNotifications;
     if (dto.enableEmailNotifications !== undefined) updateData.enableEmailNotifications = dto.enableEmailNotifications;
 
+    const defaultStoreSetting = {
+      id: 'default',
+      storeName: 'OcuSphere Optical Lounge',
+      tagline: 'Precision Vision & Designer Eyewear',
+      address: {
+        street: '124 Linking Road, Bandra West',
+        city: 'Mumbai',
+        state: 'Maharashtra',
+        postalCode: '400050',
+        country: 'India',
+      },
+      phone: '+91 22 2640 1234',
+      email: 'concierge@ocusphere.in',
+      gstin: '27AABCO1234A1Z5',
+      openingHours: 'Mon - Sun: 10:00 AM - 09:30 PM',
+      bookingCapacityPerHour: 4,
+      reservationHoldDays: 2,
+      taxRatePercent: 12.0,
+      receiptHeader: 'OcuSphere Flagship Optical Lounge',
+      receiptFooter: 'Thank you for choosing OcuSphere for your visual wellness.',
+    };
+
     const updated = await this.prisma.storeSetting.upsert({
       where: { id: 'default' },
       update: updateData,
       create: {
-        id: 'default',
+        ...defaultStoreSetting,
         ...updateData,
       },
     });
